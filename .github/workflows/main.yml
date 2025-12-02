@@ -1,0 +1,39 @@
+name: Atualizar Dados B3
+
+on:
+  workflow_dispatch: # Isso cria o botão de rodar manualmente
+  schedule:
+    # Roda automaticamente dias 1 e 15 do mês às 00:00 UTC
+    - cron: '0 0 1,15 * *'
+
+permissions:
+  contents: write # Permite que o robô salve o arquivo JSON no seu rep
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código do repositório
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Instalar dependências
+        run: |
+          pip install -r requirements.txt
+
+      - name: Rodar script de atualização
+        run: python update_data_full.py
+
+      - name: Salvar arquivo JSON (Commit)
+        run: |
+          git config --global user.name 'GitHub Action Bot'
+          git config --global user.email 'action@github.com'
+          # Tenta adicionar o arquivo, se ele não existir ou mudou
+          git add dados_b3_atualizados.json || true
+          # Só faz o commit se houver algo novo
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Dados atualizados automaticamente" && git push)
